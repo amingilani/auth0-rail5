@@ -1,8 +1,10 @@
-# Auth0 with Rails 5 Done Right
+# Auth0 with Rails 5
 
-The existing documentation at Auth0 is overly simplistic and aims to get you up and running really fast. This tutorial gets you up and running really fast, but while observing all of the usual Rails' conventions.
+Rails 5 is out with Action Cable, a brand new API mode, and best of all, Rake tasks inside Rails!
 
-The Auth0 documentation also contains a few typos that break your code, this (hopefully) doesn't
+The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way, and will lead to a better base application to use.
+
+As an added bonus, this application will be compatible with [Pundit](https://github.com/elabs/pundit) right out of the box!
 
 ## Setting up an Auth0 powered Rails App
 
@@ -10,7 +12,7 @@ There's already an Auth0 tutorial on making a Ruby on Rails app, but it skips ov
 
 ### Generating a Rails App
 
-If you're working with rails, you already know this, but I like to keep things complete.
+If you're working with rails, you already know this, but I like to keep things complete. We're also going to be using postgresql as our database, even in development. It's good practice to reflect your production environment as closely as possible in development, and databases can be particularly tricky since some migrations that work with, say, sqlite won't work with postgresql.
 
 ```bash
 $ rails new auth0_setup --database=postgresql
@@ -18,7 +20,11 @@ $ rails new auth0_setup --database=postgresql
 
 ### Setting up Gems
 
-We're going to be storing secrets in environment variables, so for dev purposes, we need an extra gem. Add the following to your `Gemfile`:
+Omniauth is a flexible authentication system that standardizes authentication over a countless providers through custom strategies. Auth0 already has an Omniauth strategy designed for drop in use!
+
+Adhereing to best practices, we're going to be storing secrets in environment variables instead of checking them into our code. To make it easier to setup environment variables in development, we'll need the [dotenv](https://github.com/bkeepers/dotenv) gem.
+
+Add the following to your `Gemfile` and run `bundle install`:
 
 ```ruby
 # Standard Auth0 requirements
@@ -28,18 +34,16 @@ gem 'omniauth-auth0', '~> 1.4.1'
 gem 'dotenv-rails', require: 'dotenv/rails-now', group: [:development, :test]
 ```
 
-### Gitignore secrets
+### Setup your environment variables
 
-Add the following to your `.gitignore` and commit this now:
+Dotenv will load environment variables stored in the `.env` file, so you don't want to check that into version controller. Add the following to your `.gitignore` and commit it immediately.
 
 ```bash
 # Ignore the environment variables
 .env
 ```
 
-### Setup your environment variables
-
-When in development or testing, we want to load secrets from outside version control, so create a `.env` file with the following content:
+Now we can safely store our secrets. Create a `.env` file, and copy your Auth0 tokens by clicking on settings for your [Client](https://manage.auth0.com/#/clients)
 
 ```
 AUTH0_CLIENT_ID= #INSERT YOUR SECRET HERE
@@ -49,7 +53,7 @@ AUTH0_DOMAIN= #INSERT YOUR SECRET HERE
 
 ### Setup app secrets
 
-Instead of fetching the secrets directly in your code, fetch them once in the secrets file, where they should be and refer them via this file throughout your code. Make the following changes to your `config/secrets.yml`
+Instead of fetching the secrets directly in your code, fetch them once in the secrets file, where they should be, and refer them via this file throughout your code. Make the following changes to your `config/secrets.yml`
 
 ```yaml
 # Add this to the top of the file
@@ -67,8 +71,6 @@ test:
   <<: *default
   ...
 
-# Do not keep production secrets in the repository,
-# instead read values from the environment.
 production:
   <<: *default
   ...
@@ -77,7 +79,7 @@ production:
 
 ### Create an initializer
 
-Create `config/initializers/auth0.rb` to configure OmniAuth.
+Initializers are loaded before the application is executed. Let's configure Omniauth to initiate the Auth0 middlerware. Create `config/initializers/auth0.rb` to configure OmniAuth.
 
 ```ruby
 # Configure the middleware
@@ -92,9 +94,11 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 ```
 
-### Generating Controllers
+### Creating Pages
 
-We want two pages for our simplistic app, a publicly accessible contoller home page, and a privately accessible dashboard, as well as a controller without pages for an authentication api:
+After authenticating the user, Auth0 will redirect to your app and tell you the if the authentication was successful. We need two callback urls, one for success authentication and one for failure, let's name them `callback`, and `failure` respectively. They don't need any html, css, or javascript associated with them.
+
+We also want two pages for our simplistic app, a publicly accessible home page, and a privately accessible dashboard. These will be in their own controllers.
 
 ```bash
 rails g controller PublicPages home && \
@@ -103,11 +107,9 @@ rails g controller auth0 callback failure --skip-template-engine --skip-assets
 ```
 
 Troubleshoot:
-If you get errors, you should probably setup your db with `rails db:setup && rails db:migrate`
+If you get errors running your app at this point, you should probably setup your database with `rails db:setup && rails db:migrate`
 
-### Fixing routes
-
-We want to route all the get requests to our controllers and actions
+Now let's wire up the routes to our controllers and actions. Make the following changes to `config/routes.rb`:
 
 ```ruby
 # home page
@@ -144,20 +146,18 @@ class Auth0Controller < ApplicationController
 end
 ```
 
-### Add the callback link to Auth0
-
-Auth0 only allows callbacks to a whitelist so specify your callback urls at [Application Settings](https://manage.auth0.com/#/applications):
+Auth0 only allows callbacks to a whitelist of URLs for security purposes. We also want a callback for our development environment so specify these callback urls at [Application Settings](https://manage.auth0.com/#/applications):
 
 ```
-https://liveapplication.example.com/auth/auth0/callback
+https://example.com/auth/auth0/callback
 http://localhost:3000/auth/auth0/callback
 ```
 
-The second one is to let you develop locally.
+Replace `https://example.com` with the URL of your actual application.
 
 ### Creating a login page
 
-Replace the contents of `app/views/public_pages/home.html.erb`
+Auth0 provides a beautiful embedded login form called [Lock](https://auth0.com/docs/libraries/lock). It's designed to work with Auth0 and looks absolutely gorgeous. Replace the contents of `app/views/public_pages/home.html.erb`
 
 ```html
 <div id="root" style="width: 320px; margin: 40px auto; padding: 10px; border-style: dashed; border-width: 1px; box-sizing: border-box;">
@@ -183,7 +183,7 @@ Replace the contents of `app/views/public_pages/home.html.erb`
 
 ### An auth0 helper
 
-Coming from using Devise for authentication in Rails, I liked the helpers it gave so let's recreate those. Add the following to `app/helpers/auth0_helper.rb`
+Coming from using Devise for authentication in Rails, I liked the helpers it gave so let's recreate those as closely as possible. Add the following to `app/helpers/auth0_helper.rb`
 
 ```ruby
 module Auth0Helper
@@ -218,15 +218,15 @@ module Auth0Helper
 end
 ```
 
-### Add the helper to ApplicationController
-
-Add this line to your `app/controllers/application_controller.rb` access your helpers in all your controllers
+For this helper to be available throughout your application, add this line to your `app/controllers/application_controller.rb`. All other controllers inherit form Application Controller.
 
 ```ruby
 include Auth0Helper
 ```
 
 ### Showing user info in the dashboard
+
+We don't really have any content to show in our sample application at this point so let's make our dashboard show the User's picture and name upon login!
 
 `app/controllers/dashboard_controller.rb`
 ```
@@ -247,7 +247,6 @@ end
 </div>
 ```
 
-We're done!
 
 ### Descriptive Errors
 
@@ -280,8 +279,14 @@ To make your app work in development:
    ```
 
 
-## Final Thoughts
+## Conclusion
 
-Congratulations, you now have a Rails app that authenticates entirely with JWTs, and violates none of the rails conventions.
+Congratulations, you now have an application that:
 
-In my next post i'll be discussing how to add relationships with users while authenticating with Auth0
+1. Does not store any user information in the database
+2. Handles authentication statelessly
+3. Stores configuration secrets in environment variables
+4. Provides a devise-like `current_user`
+5. Follows the Rails Way in everything.
+
+If you use Pundit for authorization it will work out of the box with your setup since it hooks onto `current_user`
