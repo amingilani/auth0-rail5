@@ -2,7 +2,7 @@
 
 Rails 5 is out with Action Cable, a brand new API mode, and best of all, Rake tasks inside Rails!
 
-The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way, and will lead to a better base application to use.
+The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way, and will lead to a stronger base on which to grow your application.
 
 As an added bonus, this application will be compatible with [Pundit](https://github.com/elabs/pundit) right out of the box!
 
@@ -96,7 +96,7 @@ end
 
 ### Creating Pages
 
-After authenticating the user, Auth0 will redirect to your app and tell you the if the authentication was successful. We need two callback urls, one for success authentication and one for failure, let's name them `callback`, and `failure` respectively. They don't need any html, css, or javascript associated with them.
+After authenticating the user, Auth0 will redirect to your app and tell you the if the authentication was successful. We need two callback urls, one for auth0 and one for the app to redirect to and handle failure. We'll talk more about the second one later. For now let's name them `callback`, and `failure` respectively. They don't need any html, css, or javascript associated with them.
 
 We also want two pages for our simplistic app, a publicly accessible home page, and a privately accessible dashboard. These will be in their own controllers.
 
@@ -250,7 +250,7 @@ end
 
 ### Descriptive Errors
 
-When authentication fails, you want to display the reason for the failure, so add this to your `config/initializers/omniauth.rb`
+Remember the `failure` callback? When authentication fails, you want to handle it gracefully, so on unsuccessful authentication, let's make Omniauth redirect there and pass along an error description. Add this to your `config/initializers/omniauth.rb`
 
 ```ruby
 OmniAuth.config.on_failure = Proc.new { |env|
@@ -263,7 +263,7 @@ OmniAuth.config.on_failure = Proc.new { |env|
 
 ### Overflowing Cookies in Development
 
-To make your app work in development:
+Cookies have a 4kb limit, which is too small to store our user's information in. More details can be found [here](http://stackoverflow.com/questions/9473808/cookie-overflow-in-rails-application) but to make your app work in development:
 
 1. Add this to `/config/initializers/session_store.rb`
 
