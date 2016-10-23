@@ -2,7 +2,7 @@
 
 Rails 5 is out with Action Cable, a brand new API mode, and best of all, Rake tasks inside Rails!
 
-The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way, and will lead to a stronger base on which to grow your application.
+The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way. This will lead to a stronger base on which to grow your application.
 
 As an added bonus, this application will be compatible with [Pundit](https://github.com/elabs/pundit) right out of the box!
 
@@ -20,9 +20,9 @@ $ rails new auth0_setup --database=postgresql
 
 ### Setting up Gems
 
-Omniauth is a flexible authentication system that standardizes authentication over a countless providers through custom strategies. Auth0 already has an Omniauth strategy designed for drop in use!
+Omniauth is a flexible authentication system that standardizes authentication over several providers through custom strategies. Auth0 already has an Omniauth strategy designed for drop in use!
 
-Adhereing to best practices, we're going to be storing secrets in environment variables instead of checking them into our code. To make it easier to setup environment variables in development, we'll need the [dotenv](https://github.com/bkeepers/dotenv) gem.
+Adhering to best practices, we're going to be storing secrets in environment variables instead of checking them into our code. To make it easier to setup environment variables in development, we'll need the [dotenv](https://github.com/bkeepers/dotenv) gem.
 
 Add the following to your `Gemfile` and run `bundle install`:
 
@@ -36,14 +36,14 @@ gem 'dotenv-rails', require: 'dotenv/rails-now', group: [:development, :test]
 
 ### Setup your environment variables
 
-Dotenv will load environment variables stored in the `.env` file, so you don't want to check that into version controller. Add the following to your `.gitignore` and commit it immediately.
+Dotenv will load environment variables stored in the `.env` file, so you don't want to check that into version control. Add the following to your `.gitignore` and commit it immediately.
 
 ```bash
 # Ignore the environment variables
 .env
 ```
 
-Now we can safely store our secrets. Create a `.env` file, and copy your Auth0 tokens by clicking on settings for your [Client](https://manage.auth0.com/#/clients)
+Now we can safely store our secrets. Create a `.env` file, and copy your Auth0 tokens from the settings page of your [Client](https://manage.auth0.com/#/clients)
 
 ```
 AUTH0_CLIENT_ID= #INSERT YOUR SECRET HERE
@@ -53,7 +53,7 @@ AUTH0_DOMAIN= #INSERT YOUR SECRET HERE
 
 ### Setup app secrets
 
-Instead of fetching the secrets directly in your code, fetch them once in the secrets file, where they should be, and refer them via this file throughout your code. Make the following changes to your `config/secrets.yml`
+Instead of referring to the secrets directly in your code, fetch them once in the secrets file, where they should be, and refer them via this file throughout your code. Make the following changes to your `config/secrets.yml`
 
 ```yaml
 # Add this to the top of the file
@@ -79,7 +79,7 @@ production:
 
 ### Create an initializer
 
-Initializers are loaded before the application is executed. Let's configure Omniauth to initiate the Auth0 middlerware. Create `config/initializers/auth0.rb` to configure OmniAuth.
+Initializers are loaded before the application is executed. Let's configure Omniauth's Auth0 strategy and add it to the middleware stack. Create `config/initializers/auth0.rb` to configure OmniAuth.
 
 ```ruby
 # Configure the middleware
@@ -96,7 +96,7 @@ end
 
 ### Creating Pages
 
-After authenticating the user, Auth0 will redirect to your app and tell you the if the authentication was successful. We need two callback urls, one for auth0 and one for the app to redirect to and handle failure. We'll talk more about the second one later. For now let's name them `callback`, and `failure` respectively. They don't need any html, css, or javascript associated with them.
+After authenticating the user, Auth0 will redirect to your app and tell you the if the authentication was successful. We need two callback urls, one for Auth0's response after an authorization request and one for us to redirect to and handle failure. We'll talk more about the second one later. For now let's name them `callback`, and `failure` respectively. They don't need any html, css, or javascript associated with them.
 
 We also want two pages for our simplistic app, a publicly accessible home page, and a privately accessible dashboard. These will be in their own controllers.
 
@@ -129,22 +129,25 @@ Replace the file in `/app/controllers/auth0_controller.rb` with
 
 ```ruby
 class Auth0Controller < ApplicationController
+  # This stores all the user information that came from Auth0
+  # and the IdP
   def callback
-    # This stores all the user information that came from Auth0
-    # and the IdP
     session[:userinfo] = request.env['omniauth.auth']
 
     # Redirect to the URL you want after successful auth
     redirect_to '/dashboard'
   end
 
+  # This handles authentication failures
   def failure
-    # show a failure page or redirect to an error page
     @error_type = request.params['error_type']
     @error_msg = request.params['error_msg']
+    # TODO show a failure page or redirect to an error page
   end
 end
 ```
+
+You may want to finish the TODO above after you're done with
 
 Auth0 only allows callbacks to a whitelist of URLs for security purposes. We also want a callback for our development environment so specify these callback urls at [Application Settings](https://manage.auth0.com/#/applications):
 
@@ -250,7 +253,7 @@ end
 
 ### Descriptive Errors
 
-Remember the `failure` callback? When authentication fails, you want to handle it gracefully, so on unsuccessful authentication, let's make Omniauth redirect there and pass along an error description. Add this to your `config/initializers/omniauth.rb`
+Remember the `failure` callback? When authentication fails, you want to handle it gracefully. So on unsuccessful authentication, let's make Omniauth internally redirect there and pass along an error description. Add this to your `config/initializers/omniauth.rb`
 
 ```ruby
 OmniAuth.config.on_failure = Proc.new { |env|
@@ -277,7 +280,6 @@ Cookies have a 4kb limit, which is too small to store our user's information in.
    # enforce this rule
    config.cache_store = :memory_store
    ```
-
 
 ## Conclusion
 
