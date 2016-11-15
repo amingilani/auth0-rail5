@@ -1,5 +1,7 @@
 # Auth0 with Rails 5
 
+![Auth0 On Rails](docs/auth0-on-rails.png)
+
 Rails 5 is out with Action Cable, a brand new API mode, and best of all, Rake tasks inside Rails!
 
 The existing quickstart at Auth0 aims to get you up and running really fast. But in this tutorial, we'll create a new application that compartmentalizes your code appropriately, does everything in The Rails Way. This will lead to a stronger base on which to grow your application.
@@ -11,6 +13,8 @@ As an added bonus, this application will be compatible with [Pundit](https://git
 There's already an Auth0 tutorial on making a Ruby on Rails app, but it skips over a few best practices to keep things simple. I'll walk you through a more powerful initial setup.
 
 ### Generating a Rails App
+
+![Yay you're on Rails!](docs/yay-youre-on-rails.png)
 
 If you're working with rails, you already know this, but I like to keep things complete. We're also going to be using postgresql as our database, even in development. It's good practice to reflect your production environment as closely as possible in development, and databases can be particularly tricky since some migrations that work with, say, sqlite won't work with postgresql.
 
@@ -106,7 +110,7 @@ rails g controller Dashboard show && \
 rails g controller auth0 callback failure --skip-template-engine --skip-assets
 ```
 
-Troubleshoot:
+Troubleshoot:  
 If you get errors running your app at this point, you should probably setup your database with `rails db:setup && rails db:migrate`
 
 Now let's wire up the routes to our controllers and actions. Make the following changes to `config/routes.rb`:
@@ -159,6 +163,8 @@ http://localhost:3000/auth/auth0/callback
 Replace `https://example.com` with the URL of your actual application.
 
 ### Creating a login page
+
+![Lock](docs/lock.png)
 
 Auth0 provides a beautiful embedded login form called [Lock](https://auth0.com/docs/libraries/lock). It's designed to work with Auth0 and looks absolutely gorgeous. Replace the contents of `app/views/public_pages/home.html.erb`
 
@@ -228,6 +234,8 @@ include Auth0Helper
 ```
 
 ### Showing user info in the dashboard
+
+![Dashboard preview](docs/dashboard-preview.png)
 
 We don't really have any content to show in our sample application at this point so let's make our dashboard show the User's picture and name upon login!
 

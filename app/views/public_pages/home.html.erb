@@ -9,7 +9,7 @@
     container: 'root',
     auth: {
       <% if Rails.env.production? %>
-      redirectUrl: 'https://shaadiplan.io/auth/auth0/callback',
+      redirectUrl: 'https://example.com/auth/auth0/callback',
       <% else %>
       redirectUrl: 'http://localhost:3000/auth/auth0/callback',
       <% end %>
