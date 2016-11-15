@@ -227,7 +227,7 @@ module Auth0Helper
 end
 ```
 
-For this helper to be available throughout your application, add this line to your `app/controllers/application_controller.rb`. All other controllers inherit form Application Controller.
+For this helper to be available throughout your application, add this line to your `app/controllers/application_controller.rb`. All other controllers inherit from Application Controller.
 
 ```ruby
 include Auth0Helper
