@@ -151,7 +151,7 @@ class Auth0Controller < ApplicationController
 end
 ```
 
-You may want to finish the TODO above after you're done with
+You may want to finish the TODO above with your own custom behavior.
 
 Auth0 only allows callbacks to a whitelist of URLs for security purposes. We also want a callback for our development environment so specify these callback urls at [Application Settings](https://manage.auth0.com/#/applications):
 
